@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 public class Newton {
 
-    private Logger log = Logger.getLogger((Newton.class.getName()));
+    private final Logger log = Logger.getLogger((Newton.class.getName()));
 
     public Newton() {
         Handler handler = new ConsoleHandler();
@@ -23,6 +23,7 @@ public class Newton {
         log.info("Info");
         if (zahl < 0)
             throw new IllegalArgumentException("Wurzel aus Zahl < 0: " + zahl);
+            log.severe("Exception");
         log.fine("Fine");
         double xn = 1.0;
         while (Math.abs(zahl - xn * xn) > genauigkeit) {
