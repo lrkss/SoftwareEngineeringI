@@ -1,22 +1,19 @@
 package de.logging.quadrat;
 
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 public class Newton {
 
     private final Logger log = Logger.getLogger((Newton.class.getName()));
+    private final Formatter formatter = new XMLFormatter();
+
 
     public Newton() {
         Handler handler = new ConsoleHandler();
-        handler.setLevel(Level.FINEST);
+        handler.setFormatter(formatter);
+        handler.setLevel(Level.FINE);
         log.addHandler(handler);
-        log.setLevel(Level.FINEST);
+        log.setLevel(Level.FINE);
     }
 
     public double wurzel(double zahl, double genauigkeit) {
