@@ -1,4 +1,4 @@
-package loggingAufgabe2.quadrat;
+package uebungsaufgaben.loggingAufgabe2.quadrat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

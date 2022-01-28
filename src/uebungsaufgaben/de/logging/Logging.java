@@ -1,4 +1,4 @@
-package de.logging;
+package uebungsaufgaben.de.logging;
 
 import java.io.FileInputStream;
 import java.io.IOException;

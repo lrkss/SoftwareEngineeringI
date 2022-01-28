@@ -1,7 +1,7 @@
-package loggingAufgabe2.tests.test1;
+package uebungsaufgaben.loggingAufgabe2.tests.test1;
 
-import loggingAufgabe2.kubik.Heron;
-import loggingAufgabe2.quadrat.Newton;
+import uebungsaufgaben.loggingAufgabe2.kubik.Heron;
+import uebungsaufgaben.loggingAufgabe2.quadrat.Newton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

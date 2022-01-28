@@ -1,7 +1,7 @@
-package de.logging;
+package uebungsaufgaben.de.logging;
 
 import java.util.Scanner;
-import de.logging.quadrat.Newton;
+import uebungsaufgaben.de.logging.quadrat.Newton;
 
 public class Main {
 

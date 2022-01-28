@@ -1,4 +1,4 @@
-package de.logging.quadrat;
+package uebungsaufgaben.de.logging.quadrat;
 
 import java.util.logging.*;
 

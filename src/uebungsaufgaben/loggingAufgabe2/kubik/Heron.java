@@ -1,4 +1,4 @@
-package loggingAufgabe2.kubik;
+package uebungsaufgaben.loggingAufgabe2.kubik;
 
 public class Heron {
 
