@@ -1,25 +1,31 @@
 package versionsverwaltung.main;
 
 import java.io.File;
-import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Versionsverwaltung {
 
     public static void main(String[] args) {
 
+        Projektanlage projekt = new Projektanlage();
+        projekt.begruessung();
+
+        System.out.println("Welches Projekt möchten Sie bearbeiten? Geben Sie einen der obigen Projektnamen an oder " +
+                "erstellen Sie ein neues Projekt, indem sie einen neuen Projektnamen eingaben. Wir legen das Verzeichnis dann neu für Sie an.");
         Scanner sc = new Scanner(System.in);
-        System.out.println("Guten Tag, welches Projekt suchen Sie? Geben Sie den den Namen eines bestehendes Projekts an. " +
-                "Wenn es dieses noch nicht gibt, legen wir für Sie ein neues Projekt an.");
         String projektname = sc.nextLine();
 
-        Projekt projekt = new Projekt();
-        Path SESSIONPFAD = projekt.neuesProjekt(projektname);
-        File projektPfad = new File(String.valueOf(SESSIONPFAD));
-
+        File projektVerzeichnis = projekt.neuesProjektAnlegen(projektname);
         Datei datei = new Datei();
+
+        if(projektVerzeichnis.exists() && projekt.hatBisherKeineDateien(projektVerzeichnis)){
+            datei.ersteDateiInEinemLeerenVerzeichnisAnlegen(projektVerzeichnis);
+        }
+
         while (true) {
-            datei.dateiAuslesen(projektPfad);
+            datei.dateiAuslesen(projektVerzeichnis);
             datei.dateiOeffnen(System.getProperty("user.dir") + "/dateiablage/test/test_1.txt"); // TODO: Später rausnehmen
         }
     }

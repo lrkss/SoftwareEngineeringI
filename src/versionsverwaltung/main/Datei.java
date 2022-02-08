@@ -120,6 +120,24 @@ public class Datei {
         datei.renameTo(neueDatei);
     }
 
+    public void ersteDateiInEinemLeerenVerzeichnisAnlegen(File projektname){
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Ihr Projekt '" + projektname.getName() + "' enthält noch" +
+                " keine Dateien. Möchten Sie jetzt eine neue Datei anlegen?");
+        String sollNeueDateiAngelegtWerden = sc.nextLine();
+        if (sollNeueDateiAngelegtWerden.contains("ja")) {
+            System.out.println("Wie soll die Datei heißen?");
+            String dateiName = sc.nextLine();
+            Datei datei = new Datei();
+            datei.neueDateiAnlegen(projektname,dateiName);
+
+        } else if(sollNeueDateiAngelegtWerden.contains("nein")){
+            System.out.println("Es wurde keine neue Datei angelegt. Die Anwendung wird nun beendet.");
+            System.exit(0);
+        }
+    }
+
+
     /**
      * Erstellt aus verschiedenen Parametern in Kombination eine neue Datei.
      * ACHTUNG: dateiname bitte korrekt angeben.

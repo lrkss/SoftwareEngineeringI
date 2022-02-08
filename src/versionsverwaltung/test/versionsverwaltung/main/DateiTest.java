@@ -20,8 +20,8 @@ class DateiTest {
     @BeforeAll
     static void setupTest() {
         // Für das Testing-Setup wird ein Projektordner benötigt, der am Schluss leicht wieder entfernt werden kann
-        Projekt projekt = new Projekt();
-        file = new File(String.valueOf(projekt.neuesProjekt(ordnername)));
+        Projektanlage projekt = new Projektanlage();
+        file = new File(String.valueOf(projekt.neuesProjektAnlegen(ordnername)));
     }
 
     @Test

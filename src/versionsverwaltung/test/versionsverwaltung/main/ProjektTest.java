@@ -5,15 +5,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProjektTest {
 
-    private static File projektFile;
-    Projekt projekt = new Projekt();
-    Path projektPfad;
+    Projektanlage projekt = new Projektanlage();
+    private static File projektVerzeichnis;
 
     @BeforeAll
     static void setupTest() {
@@ -22,18 +20,17 @@ class ProjektTest {
 
     @Test
     void neuesProjektAnlegen() {
-        projektPfad = projekt.neuesProjekt("test");
-        projektFile = new File(String.valueOf(projektPfad));
+        projektVerzeichnis = projekt.neuesProjektAnlegen("test");
 
         // I.d.R sollte ein Anlegen einer Datei möglich sein, da der Pfad individuell angepasst wird
-        assertTrue(projektFile.exists());
-        assertTrue(projektFile.isDirectory());
+        assertTrue(projektVerzeichnis.exists());
+        assertTrue(projektVerzeichnis.isDirectory());
     }
 
     @AfterAll
     static void aufraeumen() {
         // Anschließend den angelegten Ordner wieder entfernen
-        projektFile.delete();
+        projektVerzeichnis.delete();
     }
 
 }
