@@ -9,10 +9,11 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.Arrays;
 
-public class Projektanlage {
+public class Projekt {
 
     private final Logger log = LoggerFactory.getLogger(Versionsverwaltung.class);
 
+    // TODO: Pfad in eine Properties-Datei auslagern
     public final Path LOKALERPFAD = Paths.get(System.getProperty("user.dir") + "/dateiablage");
 
 

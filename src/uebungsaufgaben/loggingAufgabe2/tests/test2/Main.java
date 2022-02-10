@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Scanner;
 import java.util.logging.LogManager;
 
@@ -17,7 +18,7 @@ public class Main {
 	public static void main(String[] args) throws IOException {
 
 		LogManager.getLogManager().readConfiguration(
-				new FileInputStream("src/conf/test2.properties"));
+				new FileInputStream("src/uebungsaufgaben/conf/test2.properties"));
 
 		double genauigkeit = 0.00000001;
 		double zahl;
@@ -28,8 +29,8 @@ public class Main {
 			log.info("Basiszahl: ");
 			zahl = scanner.nextDouble();
 			try {
-				log.info("Kubikwurzel aus {}: {}", zahl, heron.kubikwurzel(zahl,genauigkeit));
-				log.info("Wurzel aus {}: {}", zahl, newton.wurzel(zahl,genauigkeit));
+				log.info(MessageFormat.format("Kubikwurzel aus {0}: {1}", zahl, heron.kubikwurzel(zahl,genauigkeit)));
+				log.info(MessageFormat.format("Wurzel aus {0}: {1}", zahl, newton.wurzel(zahl,genauigkeit)));
 			}
 			catch (Exception ex) {
 				ex.printStackTrace();

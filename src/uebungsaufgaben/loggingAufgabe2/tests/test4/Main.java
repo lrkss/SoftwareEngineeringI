@@ -5,6 +5,7 @@ import uebungsaufgaben.loggingAufgabe2.quadrat.Newton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.MessageFormat;
 import java.util.Scanner;
 
 public class Main {
@@ -22,8 +23,8 @@ public class Main {
 			log.info("Basiszahl: ");
 			zahl = scanner.nextDouble();
 			try {
-				log.info("Kubikwurzel aus {}: {}", zahl, heron.kubikwurzel(zahl,genauigkeit));
-				log.info("Wurzel aus {}: {}", zahl, newton.wurzel(zahl,genauigkeit));
+				log.info(MessageFormat.format("Kubikwurzel aus {0}: {1}", zahl, heron.kubikwurzel(zahl,genauigkeit)));
+				log.info(MessageFormat.format("Wurzel aus {0}: {1}", zahl, newton.wurzel(zahl,genauigkeit)));
 			}
 			catch (Exception ex) {
 				ex.printStackTrace();

@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProjektTest {
 
-    Projektanlage projekt = new Projektanlage();
+    Projekt projekt = new Projekt();
     private static File projektVerzeichnis;
 
     @BeforeAll
