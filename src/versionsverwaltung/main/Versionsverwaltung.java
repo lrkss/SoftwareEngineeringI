@@ -1,15 +1,16 @@
 package versionsverwaltung.main;
 
 import java.io.File;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Scanner;
 
+/**
+ * Main-Klasse des Versionsverwaltungsprogrammes
+ */
 public class Versionsverwaltung {
 
     public static void main(String[] args) {
 
-        Projektanlage projekt = new Projektanlage();
+        Projekt projekt = new Projekt();
         projekt.begruessung();
 
         System.out.println("Welches Projekt möchten Sie bearbeiten? Geben Sie einen der obigen Projektnamen an oder " +
@@ -19,18 +20,17 @@ public class Versionsverwaltung {
         Scanner sc = new Scanner(System.in);
         String projektname = sc.nextLine();
 
+        // Hier wird ein neues Projekt angelegt, wenn es noch keins gibt.
         File projektVerzeichnis = projekt.neuesProjektAnlegen(projektname);
-        Datei datei = new Datei();
 
-        if(projektVerzeichnis.exists() && projekt.hatBisherKeineDateien(projektVerzeichnis)){
-            datei.ersteDateiInEinemLeerenVerzeichnisAnlegen(projektVerzeichnis);
+        // Um nun mit Dateien in dem Projekt arbeiten zu können, wird ein neues Datei-Objekt erstellt.
+        Datei datei = new Datei(projektVerzeichnis);
+
+        if (projektVerzeichnis.exists() && projekt.hatBisherKeineDateien(projektVerzeichnis)) {
+            datei.ersteDateiInEinemLeerenVerzeichnisAnlegen();
         }
 
-        while (true) {
-            datei.dateiAuslesen(projektVerzeichnis);
-            datei.dateiOeffnen(System.getProperty("user.dir") + "/dateiablage/test/test_1.txt"); // TODO: Später rausnehmen
-        }
+        // Ab hier wird mit den Dateien in einem ausgewählten Projekt gearbeitet.
+        datei.dateiAuslesen();
     }
-
-
 }

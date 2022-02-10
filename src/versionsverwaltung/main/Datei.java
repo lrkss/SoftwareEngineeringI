@@ -5,17 +5,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-
+/**
+ * Hier werden alle Interaktionen mit den Dateien eines Projektes gesteuert bzw. verwaltet.
+ */
 public class Datei {
 
     private final Logger log = LoggerFactory.getLogger(Versionsverwaltung.class);
     private final Scanner sc = new Scanner(System.in);
+
+    private final File projektPfad;
+
+    public Datei(File projektPfad) {
+        this.projektPfad = projektPfad;
+    }
 
     /**
      * Übergeordnete Funktion mit Nutzerabfrage zum gewünschten Vorgehen. Ruft sich abschließend selbst auf,
@@ -28,7 +41,7 @@ public class Datei {
         String eingabe = sc.nextLine();
 
         if (eingabe.contains("öffnen")) {
-            dateiOeffnen(dateiAnhandVonNameUndVersionFinden(projektPfad));
+            dateiOeffnen();
 
         } else if (eingabe.contains("erstellen") || eingabe.contains("neu")) {
 
@@ -42,60 +55,147 @@ public class Datei {
                 System.out.println("Ihr Dateiname enthielt unerlaubte Zeichen und wurde geändert zu: " + neuerDateiname);
             }
 
-            neueDateiAnlegen(projektPfad, neuerDateiname);
+            neueDateiAnlegen(neuerDateiname);
 
         } else if (eingabe.contains("beenden") || eingabe.contains("abbrechen")) {
+            System.out.println("Die Anwendung wird nun beendet.");
             System.exit(0);
+        }
+
+        dateiAuslesen();
+    }
+
+    /**
+     * Das Öffnen einer Datei unterscheidet zwischen zwei Fällen:
+     * a) es soll eine Datei geöffnet werden, die bearbeitbar ist: Hier wird zunächst eine Kopie erstellt,
+     * anschließend die alte Version für Bearbeitung gesperrt und die neue Version geöffnet.
+     * b) es soll eine Datei geöffnet werden, die nicht bearbeitbar ist: Der Inhalt der Datei wird in der Konsole
+     * ausgegeben und ist so einsehbar, kann aber nicht bearbeitet werden.
+     */
+    private void dateiOeffnen() {
+        File file = new File(Objects.requireNonNull(dateiAnhandVonNameUndVersionFinden()));
+
+        if (file.canWrite()) {
+            File kopie = null;
+            try {
+                // Datei kopieren (v2) -> dateiname + _ + versionsnummer+1 + .txt
+                kopie = new File(String.valueOf(Paths.get(projektPfad.getCanonicalPath(), dateiVersionHochzaehlen(file))));
+                Files.copy(file.toPath(), kopie.toPath());
+            } catch (Exception e) {
+                // Falls keine Schreibrechte vorhanden sind, oder der Pfad nicht existiert, loggen wir den Fehler
+                log.error(e.getMessage());
+            }
+
+            // alte Datei sperren (v1)
+            dateiMitSperreBelegen(file);
+
+            dateiInEditorOeffnen(kopie);
+
+        } else {
+            // Read-Only Dateien auslesen in Konsole
+            System.out.println("\n Inhalt der " + file.getName() + "-Datei:");
+            try (BufferedReader br = new BufferedReader(new FileReader(file.getCanonicalPath()))) {
+                String zeile = "";
+                while ((zeile = br.readLine()) != null) {
+                    System.out.println(zeile);
+                }
+            } catch (Exception e) {
+                log.error("Ein Fehler ist beim Auslesen der Datei aufgetreten.");
+            }
+            System.out.println("");
         }
     }
 
-    protected void dateiOeffnen(String dateiPfad) {
-        File file = new File(dateiPfad);
+    protected void dateiMitSperreBelegen(File file) {
+        boolean isReadOnly = file.setWritable(false);
+        if (isReadOnly) {
+            log.info("Die Datei wurde erfolgreich readonly auf: " + String.valueOf(isReadOnly) + "gesetzt.");
+        } else {
+            log.error("Die Datei wurde nicht erfolgreich readonly auf: " + String.valueOf(isReadOnly) + "gesetzt.");
+        }
+    }
+
+    protected void sperreLoesen(File file) {
+        boolean isReadOnly = file.setWritable(true);
+        if (!isReadOnly) {
+            log.info("Die Datei wurde erfolgreich entsperrt.");
+        } else {
+            log.error("Die Datei wurde nicht erfolgreich entsperrt.");
+        }
+    }
+
+    /**
+     * Öffnet eine Datei im Editor.
+     * Mittels Watcher wird überwacht, wann die Datei gespeichert wurde. Nach dem Speichern wird der Editor geschlossen.
+     */
+    private void dateiInEditorOeffnen(File kopie) {
+        System.out.println("Wir öffnen Ihre Datei im Editor. Sobald Sie ihre Änderungen speichern, schließen wir den " +
+                "Editor für Sie und legen Ihre Änderungen mit einer neuen Versionsnummer ab.");
+        System.out.println("Die neuste Version kann nun von allen Nutzern bearbeitet werden.");
 
         try {
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-                String cmd = "rundll32 url.dll,FileProtocolHandler " + file.getCanonicalPath();
+                String cmd = "rundll32 url.dll,FileProtocolHandler " + kopie.getCanonicalPath();
+                // Kopie (v2) statt Datei (v1) öffnen
                 Runtime.getRuntime().exec(cmd);
             } else {
-                Desktop.getDesktop().edit(file);
-//                file.setReadOnly();
+                Desktop.getDesktop().edit(kopie);
             }
-            // TODO: Desktop.getDesktop().open(file); -> Dateien die eine Sperre haben oder nicht die neuste Versionsnummer
+
+            // Dateipfad des aktuellen Projektes
+            Path path = Paths.get(kopie.getParent());
+
+            // Der Watcher war dafür gedacht, dass wir das Beenden der Dateibearbeitung tracken und die Sperre entsprechend lösen können
+            // Unter Windows kann allerdings nur auf save, delete und create getrackt werden. Daher wird auf das Speichern gehorcht und
+            // dann der Editor via kill-Befehl geschlossen.
+            try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
+                // Wenn Entry_Modify, dann Kopie mit neuer Versionsnummer speichern
+                // Wenn nur schließen, dann Kopie löschen und Sperre des Originals entfernen
+                final WatchKey watchKey = path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+
+                boolean passendeDateiGespeichert = false;
+                while (!passendeDateiGespeichert) {
+
+                    final WatchKey wk = watchService.take();
+
+                    for (WatchEvent<?> event : wk.pollEvents()) {
+                        final Path changed = (Path) event.context();
+
+                        // Gibt den Dateipfad zurück, welche Datei gespeichert und demnach aktualisiert wurde
+                        log.info("Änderung gespeichert als " + changed);
+                        if (changed.endsWith(kopie.getName())) {
+                            // hier hätte man die Sperre lösen können, wenn Windows da nicht zwischen gehen würde
+                            // kopie.setWritable(true);
+                            passendeDateiGespeichert = true;
+
+                            // Datei automatisch schließen.
+                            // Als schnellen fix für einen Bug, haben wir ein Timeout eingebaut. Der Kill-Prozess läuft leider nur unzuverlässig
+                            TimeUnit.SECONDS.sleep(2);
+                            Runtime.getRuntime().exec("taskkill /f /im notepad.exe");
+                        }
+                    }
+                    // reset the key
+                    boolean valid = wk.reset();
+                    if (!valid) {
+                        log.error("Key has been unregistered");
+                    }
+                }
+            } catch (IOException | InterruptedException ex) {
+                log.error(ex.getMessage());
+            }
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-
-        //todo watcher
-        // File.renameTo() -> Versionsnummer nach bearbeiten der Datei: bisherige datei kopieren und an ende zahl
-        // z.B. 1.0 hochzählen -> 1.1
-        try {
-            WatchService watcher = FileSystems.getDefault().newWatchService();
-
-//            Path dir = FileSystems.getDefault().getPath("khkh");
-//            WatchKey key = dir.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
-
-            Path path = Paths.get(System.getProperty("user.home"));
-
-            path.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
-
-            WatchKey key;
-
-            while ((key = watcher.take()) != null) {
-                for (WatchEvent<?> event : key.pollEvents()) {
-                    Object o = event.context();
-                    if (o instanceof Path) {
-                        System.out.println("Path altered: " + o);
-                    }
-                }
-                key.reset();
-            }
-        } catch (IOException | InterruptedException ex) {
-            log.error(ex.getMessage());
-        }
-
     }
 
-    private String dateiAnhandVonNameUndVersionFinden(File projektPfad) {
+    /**
+     * Gibt alle Dateien eines Projekts in der Konsole aus. Der Nutzer entscheidet, welche Datei geöffnet werden soll.
+     * Falls vorhanden, wird der Pfad der ausgewählten Datei zurückgegeben. Falls nicht auffindbar, wird der
+     * Datei-Auslese-Prozess erneut gestartet.
+     *
+     * @return Falls Datei gefunden wird, wird der Dateipfad zurückgegeben, ansonsten null.
+     */
+    private String dateiAnhandVonNameUndVersionFinden() {
         System.out.println("Im Folgenden finden Sie alle Dateien des aktuellen Projektes aufgeführt:");
 
         // Nur den wichtigen ersten Teil des Dateinamens anzeigen - einmalig, ohne Versionsnummer
@@ -107,7 +207,13 @@ public class Datei {
         System.out.println("Bitte geben Sie an welche Datei Sie öffnen möchten.");
         String dateiname = sc.nextLine();
 
-        System.out.println("Bitte geben Sie auch an welche Version Sie von der Datei öffnen möchten. (z. B. 1)");
+        int anzahl = (int) Arrays.stream(Objects.requireNonNull(projektPfad.list()))
+                .filter(d -> d.contains(dateiname))
+                .count();
+
+        System.out.println("Für die Datei '" + dateiname + "' liegen " + anzahl + " Versionen vor.");
+        System.out.println("1 ist die älteste Version. " + anzahl + " ist die neuste Version.");
+        System.out.println("Bitte geben Sie an welche Version der Datei Sie öffnen möchten. (z. B. 1)");
         int version = sc.nextInt();
 
         String dateipfad = dateipfadFinden(projektPfad, dateiname, version);
@@ -116,31 +222,39 @@ public class Datei {
         } else {
             System.out.println("Ihre Eingabe konnte leider keiner vorhandenen Datei zugeordnet werden." +
                     "Bitte treffen Sie Ihre Wahl erneut.");
-            dateiAnhandVonNameUndVersionFinden(projektPfad);
+            dateiAuslesen();
         }
         return null;
     }
 
-    protected void dateiVersionHochzaehlen(File datei) {
+    /**
+     * Zählt die Version der Datei hoch.
+     *
+     * @param datei Dateiname
+     * @return neuer Dateiname
+     */
+    protected String dateiVersionHochzaehlen(File datei) {
         String[] dateinameArray = datei.getName().split("[_.]");
-        int i = Integer.parseInt(dateinameArray[2]) + 1;
-        dateinameArray[2] = String.valueOf(i);
-        File neueDatei = new File(dateinameArray[0] + "_" + dateinameArray[1] + "." + dateinameArray[2]);
-        datei.renameTo(neueDatei);
+        int i = Integer.parseInt(dateinameArray[1]) + 1;
+        dateinameArray[1] = String.valueOf(i);
+        return dateinameArray[0] + "_" + dateinameArray[1] + "." + dateinameArray[2];
     }
 
-    public void ersteDateiInEinemLeerenVerzeichnisAnlegen(File projektname){
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Ihr Projekt '" + projektname.getName() + "' enthält noch" +
+    /**
+     * Für die initiale Dateianlage in einem neuen Projekt weichen die Auswahlfunktionen ein wenig vom regulären
+     * Verhalten ab. Falls nach neuer Projektanlage keine neue Datei angelegt wird, wird das Programm automatisch beendet.
+     */
+    public void ersteDateiInEinemLeerenVerzeichnisAnlegen() {
+        System.out.println("Ihr Projekt '" + projektPfad.getName() + "' enthält noch" +
                 " keine Dateien. Möchten Sie jetzt eine neue Datei anlegen?");
         String sollNeueDateiAngelegtWerden = sc.nextLine();
         if (sollNeueDateiAngelegtWerden.contains("ja")) {
             System.out.println("Wie soll die Datei heißen?");
             String dateiName = sc.nextLine();
-            Datei datei = new Datei();
-            datei.neueDateiAnlegen(projektname,dateiName);
+            Datei datei = new Datei(projektPfad);
+            datei.neueDateiAnlegen(dateiName);
 
-        } else if(sollNeueDateiAngelegtWerden.contains("nein")){
+        } else if (sollNeueDateiAngelegtWerden.contains("nein")) {
             System.out.println("Es wurde keine neue Datei angelegt. Die Anwendung wird nun beendet.");
             System.exit(0);
         }
@@ -151,13 +265,11 @@ public class Datei {
      * Erstellt aus verschiedenen Parametern in Kombination eine neue Datei.
      * ACHTUNG: dateiname bitte korrekt angeben.
      *
-     * @param dateiname
-     * @param projektPfad
-     * @return File
+     * @param dateiname: Dateinamen der neuen Datei
      */
-    protected void neueDateiAnlegen(File projektPfad, String dateiname) {
+    protected void neueDateiAnlegen(String dateiname) {
         int version = 1;
-        File neueDatei = fileErmitteln(projektPfad, null, null, dateiname + "_" + version + ".txt");
+        File neueDatei = fileErmitteln(null, null, dateiname + "_" + version + ".txt");
         try {
             // Neue Datei anlegen, wenn diese noch nicht vorhanden ist
             if (isDateiSchonEnthalten(projektPfad, dateiname, version)) {
@@ -168,6 +280,10 @@ public class Datei {
                     neueDatei.setWritable(true);
                     neueDatei.setExecutable(true);
                     log.info("Datei wurde erfolgreich erstellt.");
+
+                    // Erste Datei auch direkt öffnen
+                    File file = new File(dateipfadFinden(projektPfad, dateiname, version));
+                    dateiInEditorOeffnen(file);
                 }
             }
         } catch (Exception e) {
@@ -180,16 +296,15 @@ public class Datei {
      * Erstellt aus verschiedenen Parametern in Kombination eine neue File, um mit dieser weiterzuarbeiten.
      * ACHTUNG: dateiname bitte korrekt angeben.
      *
-     * @param file
-     * @param path
-     * @param pfadname
-     * @param dateiname
-     * @return File
+     * @param path:      Ordnerpfad in dem gesucht werden soll
+     * @param pfadname:  Name des Ordners
+     * @param dateiname: Name der Datei
+     * @return File: File-Objekt aus verschiedenen gegebenen Parametern bzw. Infos einer Datei
      */
-    protected File fileErmitteln(File file, Path path, String pfadname, String dateiname) {
+    protected File fileErmitteln(Path path, String pfadname, String dateiname) {
         if (dateiname != null) {
-            if (file != null) {
-                return Paths.get(file.getAbsolutePath(), dateiname).toFile();
+            if (projektPfad != null) {
+                return Paths.get(projektPfad.getAbsolutePath(), dateiname).toFile();
             } else if (path != null) {
                 return Paths.get(path.toString(), dateiname).toFile();
             } else if (pfadname != null) {
@@ -206,20 +321,21 @@ public class Datei {
     }
 
     /**
-     * @param file
-     * @param name    @NotNull
-     * @param version
-     * @return String
+     * Gibt den Pfad zurück, wo die gesuchte Datei liegt.
+     *
+     * @param file:    Ordner in der, die Datei liegen sollte
+     * @param name:    Name der Datei
+     * @param version: Version der Datei
+     * @return String: Dateipfad der Datei als String
      */
     protected String dateipfadFinden(File file, @NotNull String name, int version) {
         File[] list = file.listFiles();
         if (list != null) {
             for (File fil : list) {
-                // Den Dateinamen auseinenader splitten, um Name und Version einzeln zu checken
+                // Den Dateinamen auseinander splitten, um Name und Version einzeln zu checken
                 String[] tokens = fil.getName().split("[_.]");
                 if (fil.isDirectory()) {
                     dateipfadFinden(fil, name, version);
-//                } else if ((name + ".txt").equals(fil.getName())) {
                 } else if ((name).equals(tokens[0]) && version == Integer.parseInt(tokens[1])) {
                     return fil.getAbsolutePath();
                 }
@@ -231,9 +347,9 @@ public class Datei {
     /**
      * Prüft, ob in diesem Projekt bereits eine Datei mit dem @param name existiert.
      *
-     * @param file
-     * @param name @NotNull
-     * @return String
+     * @param file: Ordner der zu suchenden Datei
+     * @param name: Name der zu suchenden Datei @NotNull
+     * @return boolean: Ist die Datei schon in dem Ordner enthalten?
      */
     protected boolean isDateiSchonEnthalten(File file, @NotNull String name, int version) {
         File[] list = file.listFiles();
