@@ -24,7 +24,7 @@ public class Projekt {
     }
 
     /**
-     * Aus dem individuellen Projectpath und der Eingabe des Users wird ein Pfad erstellt,
+     * Aus dem individuellen Projektpath und der Eingabe des Users wird ein Pfad erstellt,
      * in dem gesucht wird, ob es einen Ordner mit dem Namen schon gibt.
      * @param projektname
      * @return Path

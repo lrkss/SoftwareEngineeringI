@@ -13,7 +13,9 @@ public class Versionsverwaltung {
         projekt.begruessung();
 
         System.out.println("Welches Projekt möchten Sie bearbeiten? Geben Sie einen der obigen Projektnamen an oder " +
-                "erstellen Sie ein neues Projekt, indem sie einen neuen Projektnamen eingaben. Wir legen das Verzeichnis dann neu für Sie an.");
+                "erstellen Sie ein neues Projekt, indem sie einen neuen Projektnamen eingeben.");
+        System.out.println("Wir legen das Verzeichnis dann neu für Sie an.");
+
         Scanner sc = new Scanner(System.in);
         String projektname = sc.nextLine();
 

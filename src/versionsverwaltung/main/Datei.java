@@ -17,7 +17,12 @@ public class Datei {
     private final Logger log = LoggerFactory.getLogger(Versionsverwaltung.class);
     private final Scanner sc = new Scanner(System.in);
 
-    public void dateiAuslesen(File projektPfad) {
+    /**
+     * Übergeordnete Funktion mit Nutzerabfrage zum gewünschten Vorgehen. Ruft sich abschließend selbst auf,
+     * um nach dem schließen einer Datei weitermachen zu können, ohne dass das Programm neu starten zu müssen.
+     * Das Programm wird also nur beeendet, wenn dies explizit vom Nutzer angegeben wird.
+     */
+    public void dateiAuslesen() {
         System.out.println("Wollen Sie in Ihrem Projekt eine vorhandene Datei öffnen, " +
                 "eine neue erstellen oder Ihren laufenden Task beenden?");
         String eingabe = sc.nextLine();
@@ -92,8 +97,12 @@ public class Datei {
 
     private String dateiAnhandVonNameUndVersionFinden(File projektPfad) {
         System.out.println("Im Folgenden finden Sie alle Dateien des aktuellen Projektes aufgeführt:");
-        File[] listOfFiles = projektPfad.listFiles();
-        System.out.println(Arrays.toString(listOfFiles));
+
+        // Nur den wichtigen ersten Teil des Dateinamens anzeigen - einmalig, ohne Versionsnummer
+        Arrays.stream(Objects.requireNonNull(projektPfad.list()))
+                .map(d -> d.substring(0, d.indexOf("_")))
+                .collect(Collectors.toSet())
+                .forEach(datei -> System.out.println("  - " + datei));
 
         System.out.println("Bitte geben Sie an welche Datei Sie öffnen möchten.");
         String dateiname = sc.nextLine();
