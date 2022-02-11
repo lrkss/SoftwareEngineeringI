@@ -35,13 +35,13 @@ public class Datei {
      * um nach dem schließen einer Datei weitermachen zu können, ohne dass das Programm neu starten zu müssen.
      * Das Programm wird also nur beeendet, wenn dies explizit vom Nutzer angegeben wird.
      */
-    public void dateiAuslesen() {
+    public void auslesen() {
         System.out.println("Wollen Sie in Ihrem Projekt eine vorhandene Datei öffnen, " +
                 "eine neue erstellen oder Ihren laufenden Task beenden?");
         String eingabe = sc.nextLine();
 
         if (eingabe.contains("öffnen")) {
-            dateiOeffnen();
+            oeffnen();
 
         } else if (eingabe.contains("erstellen") || eingabe.contains("neu")) {
 
@@ -55,14 +55,14 @@ public class Datei {
                 System.out.println("Ihr Dateiname enthielt unerlaubte Zeichen und wurde geändert zu: " + neuerDateiname);
             }
 
-            neueDateiAnlegen(neuerDateiname);
+            neuAnlegenMitForgendemNamen(neuerDateiname);
 
         } else if (eingabe.contains("beenden") || eingabe.contains("abbrechen")) {
             System.out.println("Die Anwendung wird nun beendet.");
             System.exit(0);
         }
 
-        dateiAuslesen();
+        auslesen();
     }
 
     /**
@@ -72,8 +72,8 @@ public class Datei {
      * b) es soll eine Datei geöffnet werden, die nicht bearbeitbar ist: Der Inhalt der Datei wird in der Konsole
      * ausgegeben und ist so einsehbar, kann aber nicht bearbeitet werden.
      */
-    private void dateiOeffnen() {
-        File file = new File(Objects.requireNonNull(dateiAnhandVonNameUndVersionFinden()));
+    private void oeffnen() {
+        File file = new File(Objects.requireNonNull(anhandVonNameUndVersionFinden()));
 
         if (file.canWrite()) {
             File kopie = null;
@@ -87,9 +87,9 @@ public class Datei {
             }
 
             // alte Datei sperren (v1)
-            dateiMitSperreBelegen(file);
+            mitSperreBelegen(file);
 
-            dateiInEditorOeffnen(kopie);
+            inEditorOeffnen(kopie);
 
         } else {
             // Read-Only Dateien auslesen in Konsole
@@ -106,7 +106,7 @@ public class Datei {
         }
     }
 
-    protected void dateiMitSperreBelegen(File file) {
+    protected void mitSperreBelegen(File file) {
         boolean isReadOnly = file.setWritable(false);
         if (isReadOnly) {
             log.info("Die Datei wurde erfolgreich readonly auf: " + String.valueOf(isReadOnly) + "gesetzt.");
@@ -128,7 +128,7 @@ public class Datei {
      * Öffnet eine Datei im Editor.
      * Mittels Watcher wird überwacht, wann die Datei gespeichert wurde. Nach dem Speichern wird der Editor geschlossen.
      */
-    private void dateiInEditorOeffnen(File kopie) {
+    private void inEditorOeffnen(File kopie) {
         System.out.println("Wir öffnen Ihre Datei im Editor. Sobald Sie ihre Änderungen speichern, schließen wir den " +
                 "Editor für Sie und legen Ihre Änderungen mit einer neuen Versionsnummer ab.");
         System.out.println("Die neuste Version kann nun von allen Nutzern bearbeitet werden.");
@@ -195,7 +195,7 @@ public class Datei {
      *
      * @return Falls Datei gefunden wird, wird der Dateipfad zurückgegeben, ansonsten null.
      */
-    private String dateiAnhandVonNameUndVersionFinden() {
+    private String anhandVonNameUndVersionFinden() {
         System.out.println("Im Folgenden finden Sie alle Dateien des aktuellen Projektes aufgeführt:");
 
         // Nur den wichtigen ersten Teil des Dateinamens anzeigen - einmalig, ohne Versionsnummer
@@ -210,9 +210,9 @@ public class Datei {
         int anzahl = (int) Arrays.stream(Objects.requireNonNull(projektPfad.list()))
                 .filter(d -> d.contains(dateiname))
                 .count();
-
         System.out.println("Für die Datei '" + dateiname + "' liegen " + anzahl + " Versionen vor.");
         System.out.println("1 ist die älteste Version. " + anzahl + " ist die neuste Version.");
+
         System.out.println("Bitte geben Sie an welche Version der Datei Sie öffnen möchten. (z. B. 1)");
         int version = sc.nextInt();
 
@@ -222,7 +222,7 @@ public class Datei {
         } else {
             System.out.println("Ihre Eingabe konnte leider keiner vorhandenen Datei zugeordnet werden." +
                     "Bitte treffen Sie Ihre Wahl erneut.");
-            dateiAuslesen();
+            auslesen();
         }
         return null;
     }
@@ -244,7 +244,7 @@ public class Datei {
      * Für die initiale Dateianlage in einem neuen Projekt weichen die Auswahlfunktionen ein wenig vom regulären
      * Verhalten ab. Falls nach neuer Projektanlage keine neue Datei angelegt wird, wird das Programm automatisch beendet.
      */
-    public void ersteDateiInEinemLeerenVerzeichnisAnlegen() {
+    public void inEinemLeerenVerzeichnisAnlegen() {
         System.out.println("Ihr Projekt '" + projektPfad.getName() + "' enthält noch" +
                 " keine Dateien. Möchten Sie jetzt eine neue Datei anlegen?");
         String sollNeueDateiAngelegtWerden = sc.nextLine();
@@ -252,7 +252,7 @@ public class Datei {
             System.out.println("Wie soll die Datei heißen?");
             String dateiName = sc.nextLine();
             Datei datei = new Datei(projektPfad);
-            datei.neueDateiAnlegen(dateiName);
+            datei.neuAnlegenMitForgendemNamen(dateiName);
 
         } else if (sollNeueDateiAngelegtWerden.contains("nein")) {
             System.out.println("Es wurde keine neue Datei angelegt. Die Anwendung wird nun beendet.");
@@ -267,7 +267,7 @@ public class Datei {
      *
      * @param dateiname: Dateinamen der neuen Datei
      */
-    protected void neueDateiAnlegen(String dateiname) {
+    protected void neuAnlegenMitForgendemNamen(String dateiname) {
         int version = 1;
         File neueDatei = fileErmitteln(null, null, dateiname + "_" + version + ".txt");
         try {
@@ -283,7 +283,7 @@ public class Datei {
 
                     // Erste Datei auch direkt öffnen
                     File file = new File(dateipfadFinden(projektPfad, dateiname, version));
-                    dateiInEditorOeffnen(file);
+                    inEditorOeffnen(file);
                 }
             }
         } catch (Exception e) {

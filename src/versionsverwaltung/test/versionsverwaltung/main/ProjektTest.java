@@ -20,7 +20,7 @@ class ProjektTest {
 
     @Test
     void neuesProjektAnlegen() {
-        projektVerzeichnis = projekt.neuesProjektAnlegen("test");
+        projektVerzeichnis = projekt.anlegenMitFolgendemNamen("test");
 
         // I.d.R sollte ein Anlegen einer Datei möglich sein, da der Pfad individuell angepasst wird
         assertTrue(projektVerzeichnis.exists());

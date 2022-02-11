@@ -20,14 +20,14 @@ class DateiTest {
     static void setupTest() {
         // Für das Testing-Setup wird ein Projektordner benötigt, der am Schluss leicht wieder entfernt werden kann
         Projekt projekt = new Projekt();
-        file = new File(String.valueOf(projekt.neuesProjektAnlegen(ordnername)));
+        file = new File(String.valueOf(projekt.anlegenMitFolgendemNamen(ordnername)));
         datei = new Datei(file);
     }
 
     @BeforeEach
         // Die Klasse kann nicht automatisiert werden, da ein manuelles Speichern gefordert wird
     void dateiErstellen() {
-        datei.neueDateiAnlegen(dateiname);
+        datei.neuAnlegenMitForgendemNamen(dateiname);
     }
 
     @Test
@@ -37,7 +37,7 @@ class DateiTest {
         Assertions.assertNull(datei.dateipfadFinden(file, methodenDateiname, 1));
 
         // Nun wird eine entsprechende Datei mit dem Namen "testDatei" in den Ordner "testOrdner" angelegt
-        datei.neueDateiAnlegen(methodenDateiname);
+        datei.neuAnlegenMitForgendemNamen(methodenDateiname);
 
         // Nun gibt es eine Date mit dem Namen "testDatei" im Projektordner "testOrdner
         Assertions.assertTrue(datei.dateipfadFinden(file, methodenDateiname, 1).endsWith(methodenDateiname + "_1.txt"));
@@ -62,7 +62,7 @@ class DateiTest {
         Assertions.assertTrue(methodenFile.canWrite());
 
         // Nach setzen der Sperre kann dies auch abgefragt werden
-        datei.dateiMitSperreBelegen(methodenFile);
+        datei.mitSperreBelegen(methodenFile);
         Assertions.assertFalse(methodenFile.canWrite());
     }
 
@@ -73,7 +73,7 @@ class DateiTest {
         Assertions.assertTrue(methodenFile.canWrite());
 
         // Nach setzen der Sperre kann dies auch abgefragt werden
-        datei.dateiMitSperreBelegen(methodenFile);
+        datei.mitSperreBelegen(methodenFile);
         Assertions.assertFalse(methodenFile.canWrite());
 
         // Sperre ist wieder gelöst

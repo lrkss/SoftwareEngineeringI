@@ -21,16 +21,16 @@ public class Versionsverwaltung {
         String projektname = sc.nextLine();
 
         // Hier wird ein neues Projekt angelegt, wenn es noch keins gibt.
-        File projektVerzeichnis = projekt.neuesProjektAnlegen(projektname);
+        File projektVerzeichnis = projekt.anlegenMitFolgendemNamen(projektname);
 
         // Um nun mit Dateien in dem Projekt arbeiten zu können, wird ein neues Datei-Objekt erstellt.
         Datei datei = new Datei(projektVerzeichnis);
 
-        if (projektVerzeichnis.exists() && projekt.hatBisherKeineDateien(projektVerzeichnis)) {
-            datei.ersteDateiInEinemLeerenVerzeichnisAnlegen();
+        if (projektVerzeichnis.exists() && projekt.hatBisherKeineDateienIn(projektVerzeichnis)) {
+            datei.inEinemLeerenVerzeichnisAnlegen();
         }
 
         // Ab hier wird mit den Dateien in einem ausgewählten Projekt gearbeitet.
-        datei.dateiAuslesen();
+        datei.auslesen();
     }
 }

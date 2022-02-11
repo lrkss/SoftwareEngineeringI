@@ -62,7 +62,7 @@ public class Projekt {
      * @param projektname: Name für das neue Projekt
      * @return File: angelegter Ordner
      */
-    public File neuesProjektAnlegen(String projektname) {
+    public File anlegenMitFolgendemNamen(String projektname) {
         Path dateipfad = Paths.get(LOKALERPFAD.toString(), projektname);
         return verzeichnisAnlegen(dateipfad, projektname);
     }
@@ -90,7 +90,7 @@ public class Projekt {
      * @param verzeichnis: Ordner des aktuellen Projektes
      * @return boolean: leer, ja oder nein
      */
-    public boolean hatBisherKeineDateien(File verzeichnis) {
+    public boolean hatBisherKeineDateienIn(File verzeichnis) {
         return Objects.requireNonNull(verzeichnis.list()).length == 0;
     }
 
