@@ -202,34 +202,71 @@ public class Datei {
      *
      * @return Falls Datei gefunden wird, wird der Dateipfad zurückgegeben, ansonsten null.
      */
-    private String anhandVonNameUndVersionFinden() {
+    private String anhandVonNameUndVersionAuswaehlen() {
         System.out.println("Im Folgenden finden Sie alle Dateien des aktuellen Projektes aufgeführt:");
 
-        // Nur den wichtigen ersten Teil des Dateinamens anzeigen - einmalig, ohne Versionsnummer
-        Arrays.stream(Objects.requireNonNull(projektPfad.list()))
+        //Sammlung aller Dateien des Projekts, ohne Versionsnummer
+        Set<String> dateien = Arrays.stream(Objects.requireNonNull(projektPfad.list()))
                 .map(d -> d.substring(0, d.indexOf("_")))
-                .collect(Collectors.toSet())
-                .forEach(datei -> System.out.println("  - " + datei));
+                .collect(Collectors.toSet());
 
-        System.out.println("Bitte geben Sie an welche Datei Sie öffnen möchten.");
-        String dateiname = sc.nextLine();
+        // Anzeigen aller Dateien
+        dateien.forEach(datei -> System.out.println("  - " + datei));
 
-        int anzahl = (int) Arrays.stream(Objects.requireNonNull(projektPfad.list()))
-                .filter(d -> d.contains(dateiname))
-                .count();
-        System.out.println("Für die Datei '" + dateiname + "' liegen " + anzahl + " Versionen vor.");
-        System.out.println("1 ist die älteste Version. " + anzahl + " ist die neuste Version.");
+        String dateipfad;
+        String dateiname;
+        int version;
 
-        System.out.println("Bitte geben Sie an welche Version der Datei Sie öffnen möchten. (z. B. 1)");
-        int version = sc.nextInt();
-
-        String dateipfad = dateipfadFinden(projektPfad, dateiname, version);
-        if (dateipfad != null) {
+        // Falls bisher nur eine Datei vorliegt, kann dessen Dateipfad direkt ermittelt werden.
+        // Es ist hier unstrittig, welche Datei oder Version benötigt wird, weil es bisher nur eine gibt
+        List<String> saemtlicheDateienMitVersionsnummer = Arrays.stream(Objects.requireNonNull(projektPfad.list())).toList();
+        if (saemtlicheDateienMitVersionsnummer.size() == 1){
+            dateiname = dateien.stream().toList().get(0);
+            dateipfad = dateipfadFinden(projektPfad, dateiname, 1);
+            log.info("Es gibt bisher nur eine Datei im vorliegenden Projekt.");
             return dateipfad;
-        } else {
-            System.out.println("Ihre Eingabe konnte leider keiner vorhandenen Datei zugeordnet werden." +
-                    "Bitte treffen Sie Ihre Wahl erneut.");
-            auslesen();
+        }
+        // Es stehen mehrere Dateien oder mehrere Versionen zur Verfügung. Also muss der Nutzer entscheiden, welche Datei geöffnet werden soll.
+        else {
+            //Falls es mehr als eine Datei gibt, muss der Nutzer angeben, welche er öffnen möchte.
+            if (dateien.size() > 1) {
+                System.out.println("Bitte geben Sie an welche Datei Sie öffnen möchten.");
+                dateiname = sc.nextLine();
+            }
+            // Falls es nur eine Datei in mehreren Versionen gibt, muss der Dateiname nicht extra abgefragt werden
+            else {
+                dateiname = dateien.stream().toList().get(0);
+            }
+
+            // Wir ermitteln wie viele Versionen einer Datei vorliegen
+            int anzahl = (int) saemtlicheDateienMitVersionsnummer.stream()
+                    .filter(d -> d.contains(dateiname))
+                    .count();
+
+            //Wenn es mehr als eine Version gibt, soll der Nutzer entscheiden, welche Version ausgewählt werden soll
+            if (anzahl != 1){
+                System.out.println("Für die Datei '" + dateiname + "' liegen " + anzahl + " Versionen vor.");
+                System.out.println("1 ist die älteste Version. " + anzahl + " ist die neuste Version.");
+
+                System.out.println("Bitte geben Sie an welche Version der Datei Sie öffnen möchten. (z. B. 1)");
+                version = sc.nextInt();
+            }
+            //Wenn es nur eine Version gibt, muss der Nutzer diese nicht explizit auswählen
+            else {
+                version = 1;
+            }
+
+            //Hier wird jetzt die individuell ausgewählte Datei und die gewünschte Version übergeben
+            dateipfad = dateipfadFinden(projektPfad, dateiname, version);
+            if (dateipfad != null) {
+                return dateipfad;
+            }
+            // Falls, z.B. durch vertippen, die Eingaben nicht sinnvoll ausgelesen werden konnten, wird das Auslesen neu gestartet.
+            else {
+                System.out.println("Ihre Eingabe konnte leider keiner vorhandenen Datei zugeordnet werden." +
+                        "Bitte treffen Sie Ihre Wahl erneut.");
+                auslesen();
+            }
         }
         return null;
     }
