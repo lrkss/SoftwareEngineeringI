@@ -10,9 +10,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -47,15 +46,7 @@ public class Datei {
 
             System.out.println("Wie soll Ihre neue Datei heißen? (Bitte weder Punkt noch Unterstrich verwenden)");
             String dateiname = sc.nextLine();
-            String neuerDateiname = dateiname;
-
-            if (dateiname.contains(".") || dateiname.contains("_")) {
-                neuerDateiname = dateiname.replace(".", "").replace("_", "");
-
-                System.out.println("Ihr Dateiname enthielt unerlaubte Zeichen und wurde geändert zu: " + neuerDateiname);
-            }
-
-            neuAnlegenMitForgendemNamen(neuerDateiname);
+            anlegen(dateiname);
 
         } else if (eingabe.contains("beenden") || eingabe.contains("abbrechen")) {
             System.out.println("Die Anwendung wird nun beendet.");
@@ -66,6 +57,22 @@ public class Datei {
     }
 
     /**
+     * Anlegen einer neuen Datei. Bei Bedarf werden Sonderzeichen aus dem Namen entfernt
+     * @param dateiname Name der Datei, so wie er über die Konsole eingegeben wird
+     */
+    protected void anlegen(String dateiname) {
+        String neuerDateiname = dateiname;
+
+        if (dateiname.contains(".") || dateiname.contains("_")) {
+            neuerDateiname = dateiname.replace(".", "").replace("_", "");
+
+            System.out.println("Ihr Dateiname enthielt unerlaubte Zeichen und wurde geändert zu: " + neuerDateiname);
+        }
+
+        neuAnlegenMitForgendemNamen(neuerDateiname);
+    }
+
+    /**
      * Das Öffnen einer Datei unterscheidet zwischen zwei Fällen:
      * a) es soll eine Datei geöffnet werden, die bearbeitbar ist: Hier wird zunächst eine Kopie erstellt,
      * anschließend die alte Version für Bearbeitung gesperrt und die neue Version geöffnet.
@@ -73,7 +80,7 @@ public class Datei {
      * ausgegeben und ist so einsehbar, kann aber nicht bearbeitet werden.
      */
     private void oeffnen() {
-        File file = new File(Objects.requireNonNull(anhandVonNameUndVersionFinden()));
+        File file = new File(Objects.requireNonNull(anhandVonNameUndVersionAuswaehlen()));
 
         if (file.canWrite()) {
             File kopie = null;
@@ -252,7 +259,7 @@ public class Datei {
             System.out.println("Wie soll die Datei heißen?");
             String dateiName = sc.nextLine();
             Datei datei = new Datei(projektPfad);
-            datei.neuAnlegenMitForgendemNamen(dateiName);
+            datei.anlegen(dateiName);
 
         } else if (sollNeueDateiAngelegtWerden.contains("nein")) {
             System.out.println("Es wurde keine neue Datei angelegt. Die Anwendung wird nun beendet.");
