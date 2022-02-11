@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -50,9 +51,14 @@ public class Projekt {
      *  Begrüßung in der Konsolen-Ausgabe mit einer Auflistung aller aktuellen Projekte.
      */
     public void begruessung() {
-        System.out.println("Herzlich Wilkommen in unserer Versionsverwaltung. Aktuell existieren die folgenden Projekte:");
-        File alleProjekte = new File(LOKALERPFAD.toString());
-        Arrays.stream(Objects.requireNonNull(alleProjekte.list())).toList().forEach(p -> System.out.println("  - " + p));
+        System.out.println("Herzlich Wilkommen in unserer Versionsverwaltung. ");
+        File projektpfad = new File(LOKALERPFAD.toString());
+        if (Arrays.stream(projektpfad.list()).toList() == null) {
+            System.out.println("Bisher wurde noch kein Projekt eingerichtet.");
+        } else {
+            System.out.println("Aktuell existieren die folgenden Projekte:");
+            Arrays.stream(Objects.requireNonNull(projektpfad.list())).toList().forEach(p -> System.out.println("  - " + p));
+        }
     }
 
     /**
